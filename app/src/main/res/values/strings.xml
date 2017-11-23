@@ -8,4 +8,7 @@
     <string name="ok_label">OK</string>
     <string name="about_title">About Ultimate Tic Tac Toe</string>
     <string name="about_text"></string>
+    <string name="restart_label">Restart</string>
+    <string name="main_menu_label">Main Menu</string>
+    <string name="declare_winner">%1$s is the winner</string>
 </resources>

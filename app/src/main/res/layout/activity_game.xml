@@ -13,13 +13,20 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:gravity="center"
-        android:orientation="vertical">
+        android:baselineAligned="false"
+        android:orientation="horizontal">
         <fragment
             android:id="@+id/fragment_game"
-            class="org.example.tictactoe.GameFragment"
+            class="j.hig.tictactoe.GameFragment"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             tools:layout="@layout/fragment_game"/>
         <!-- Control fragment goes here... -->
+        <fragment
+            android:id="@+id/fragment_game_controls"
+            class="j.hig.tictactoe.ControlFragment"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            tools:layout="@layout/fragment_control"/>
     </LinearLayout>
 </FrameLayout>

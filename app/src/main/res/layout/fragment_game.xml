@@ -4,7 +4,6 @@
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     tools:context=".GameActivity">
-    The Game Board • 59
     <include
         layout="@layout/large_board"
         android:layout_width="wrap_content"
