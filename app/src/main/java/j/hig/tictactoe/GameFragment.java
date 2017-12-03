@@ -1,7 +1,10 @@
 package j.hig.tictactoe;
 
 import android.app.Fragment;
+import android.media.AudioAttributes;
+import android.media.SoundPool;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -31,12 +34,28 @@ public class GameFragment extends Fragment {
     private int mLastLarge;
     private int mLastSmall;
 
+    private Handler mHandler = new Handler();
+    private SoundPool mSoundPool;
+    private int mSoundX, mSoundO, mSoundMiss, mSoundRewind;
+    private float mVolume = 1f;
+
     @Override
     public void onCreate(Bundle savedInstance)
     {
         super.onCreate(savedInstance);
         setRetainInstance(true);
         initGame();
+        AudioAttributes attributes = new AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_GAME)
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .build();
+        mSoundPool = new SoundPool.Builder()
+                .setAudioAttributes(attributes).setMaxStreams(3)
+                .build();
+        mSoundX = mSoundPool.load(getActivity(), R.raw.sergenious_movex, 1);
+        mSoundO = mSoundPool.load(getActivity(), R.raw.sergenious_moveo, 1);
+        mSoundMiss = mSoundPool.load(getActivity(), R.raw.erkanozan_miss, 1);
+        mSoundRewind = mSoundPool.load(getActivity(), R.raw.joanne_rewind, 1);
     }
 
     @Override
@@ -79,15 +98,78 @@ public class GameFragment extends Fragment {
                 inner.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
+                        smallTile.animate();
                         if(isAvailable(smallTile))
                         {
+                            mSoundPool.play(mSoundX, mVolume,mVolume,1,0,1f);
                             makeMove(fLarge, fSmall);
-                            switchTurns();
+                            think();
+                        }
+                        else
+                        {
+                            mSoundPool.play(mSoundMiss, mVolume, mVolume, 1, 0, 1f);
                         }
                     }
                 });
             }
         }
+    }
+
+    private void think()
+    {
+        ((GameActivity)getActivity()).startThinking();
+        mHandler.postDelayed(new Runnable() {
+            @Override
+            public void run()
+            {
+                if(getActivity() == null)
+                    return;
+                if(mEntireBoard.getOwner() == Tile.Owner.NEITHER)
+                {
+                    int move[] = new int[2];
+                    pickMove(move);
+                    if(move[0] != -1 && move[1] != -1)
+                    {
+                        switchTurns();
+                        mSoundPool.play(mSoundO, mVolume, mVolume, 1, 0, 1f);
+                        makeMove(move[0], move[1]);
+                        switchTurns();
+                    }
+                }
+                ((GameActivity)getActivity()).stopThinking();
+            }
+        }, 1000);
+    }
+
+    private void pickMove(int[] move)
+    {
+        Tile.Owner opponent = mPlayer == Tile.Owner.X ? Tile.Owner.O : Tile.Owner.X;
+        int bestLarge = -1;
+        int bestSmall = -1;
+        int bestValue = Integer.MAX_VALUE;
+        for (int large = 0; large < 9; large++)
+        {
+            for (int small = 0; small < 9; small++)
+            {
+                Tile smallTile = mSmallTiles[large][small];
+                if(isAvailable(smallTile))
+                {
+                    Tile newBoard = mEntireBoard.deepCopy();
+                    newBoard.getSubTiles()[large].getSubTiles()[small].setOwner(opponent);
+                    int value = newBoard.evaluate();
+                    Log.d("UT3", "Moving to " + large + ", " + small + " gives value " + "" + value);
+                    if(value < bestValue)
+                    {
+                        bestLarge = large;
+                        bestSmall = small;
+                        bestValue = value;
+                    }
+                }
+            }
+        }
+        move[0] = bestLarge;
+        move[1] = bestSmall;
+        Log.d("UT3", "Best move is " + bestLarge + ", " + bestSmall);
     }
 
     private void makeMove(int large, int small)
@@ -103,6 +185,7 @@ public class GameFragment extends Fragment {
 
         if(winner != oldWinner)
         {
+            largeTile.animate();
             largeTile.setOwner(winner);
         }
         winner = mEntireBoard.findWinner();
@@ -114,6 +197,7 @@ public class GameFragment extends Fragment {
 
     private void addAvailable(Tile tile)
     {
+        tile.animate();
         mAvailable.add(tile);
     }
 
@@ -229,6 +313,6 @@ public class GameFragment extends Fragment {
         /*
         This is fairly unreadable, but basically the value of mPlayer is either O or X.
          */
-
     }
+
 }

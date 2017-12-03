@@ -1,5 +1,7 @@
 package j.hig.tictactoe;
 
+import android.animation.Animator;
+import android.animation.AnimatorInflater;
 import android.graphics.drawable.Drawable;
 import android.view.View;
 import android.widget.ImageButton;
@@ -9,6 +11,33 @@ import android.widget.ImageButton;
  */
 
 public class Tile {
+
+    public Tile deepCopy()
+    {
+        Tile tile = new Tile(mGame);
+        tile.setOwner(getOwner());
+        if(getSubTiles() != null)
+        {
+            Tile newTiles[] = new Tile[9];
+            Tile oldTiles[] = getSubTiles();
+            for (int child = 0; child < 9; child++)
+            {
+                newTiles[child] = oldTiles[child].deepCopy();
+            }
+            tile.setSubTiles(newTiles);
+        }
+        return tile;
+    }
+
+    public void animate()
+    {
+        Animator anim = AnimatorInflater.loadAnimator(mGame.getActivity(), R.animator.tictactoe);
+        if(getView() != null)
+        {
+            anim.setTarget(getView());
+            anim.start();
+        }
+    }
 
     public enum Owner
     {
@@ -103,7 +132,7 @@ public class Tile {
                 Owner owner = mSubTiles[3*row+col].getOwner();
                 if(owner == Owner.X || owner == Owner.BOTH)
                     capturedX++;
-                if(owner == Owner.X || owner == Owner.BOTH)
+                if(owner == Owner.O || owner == Owner.BOTH)
                     captureO++;
             }
             totalO[captureO]++;
@@ -119,7 +148,7 @@ public class Tile {
                 Owner owner = mSubTiles[3*row+col].getOwner();
                 if(owner == Owner.X || owner == Owner.BOTH)
                     capturedX++;
-                if(owner == Owner.X || owner == Owner.BOTH)
+                if(owner == Owner.O || owner == Owner.BOTH)
                     captureO++;
             }
             totalO[captureO]++;
@@ -133,7 +162,7 @@ public class Tile {
             Owner owner = mSubTiles[3*diag+diag].getOwner();
             if(owner == Owner.X || owner == Owner.BOTH)
                 capturedX++;
-            if(owner == Owner.X || owner == Owner.BOTH)
+            if(owner == Owner.O || owner == Owner.BOTH)
                 captureO++;
         }
         totalO[captureO]++;
@@ -145,7 +174,7 @@ public class Tile {
             Owner owner = mSubTiles[3*diag + (2 - diag)].getOwner();
             if(owner == Owner.X || owner == Owner.BOTH)
                 capturedX++;
-            if(owner == Owner.X || owner == Owner.BOTH)
+            if(owner == Owner.O || owner == Owner.BOTH)
                 captureO++;
         }
         totalO[captureO]++;
@@ -188,5 +217,29 @@ public class Tile {
                 break;
         }
         return level;
+    }
+
+    public int evaluate()
+    {
+        switch (getOwner())
+        {
+            case X:
+                return 100;
+            case O:
+                return -100;
+            case NEITHER:
+                int total = 0;
+                if (getSubTiles() != null)
+                {
+                    for (int tile = 0; tile < 9; tile++)
+                        total += getSubTiles()[tile].evaluate();
+                        int totalX[] = new int[4];
+                        int totalO[] = new int[4];
+                        countCaptures(totalX, totalO);
+                        total = total * 100 + totalX[1] + 2 * totalX[2] + 8 * totalX[3] - totalO[1] - 2 *totalO[2] - 8 * totalO[3];
+                }
+                return total;
+        }
+        return 0;
     }
 }
